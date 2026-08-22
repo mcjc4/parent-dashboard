@@ -248,7 +248,13 @@ function memLatestTs(mem){
 function memFocus(mem){
   var out={on:false,count:0,minutes:0,level:"",recent:false};
   if(!mem)return out;
-  /* 新版：focusEnabled + distractionLog */
+  /* 主用：GitHub Pages 版（guardCfg + guard，家长看板指定数据源） */
+  if(mem.guardCfg||mem.guard){
+    var gc=mem.guardCfg||{};out.on=!!gc.enabled;
+    if(mem.guard&&mem.guard.date===todayStr()){out.count=Number(mem.guard.count)||0;out.minutes=Number(mem.guard.minutes)||0;}
+    return out;
+  }
+  /* 兼容回退：trae 版（focusEnabled + distractionLog） */
   if(mem.focusEnabled!==undefined||mem.distractionLog){
     out.on=!!mem.focusEnabled;
     var log=mem.distractionLog||{};
@@ -266,9 +272,6 @@ function memFocus(mem){
     if(arr.length&&now-arr[0].ts<10*60*1000){out.recent=true;out.level=arr[0].level||"";}
     return out;
   }
-  /* 旧版：guardCfg + guard */
-  var gc=mem.guardCfg||{};out.on=!!gc.enabled;
-  if(mem.guard&&mem.guard.date===todayStr()){out.count=Number(mem.guard.count)||0;out.minutes=Number(mem.guard.minutes)||0;}
   return out;
 }
 function memTodayCount(mem,subj){
@@ -298,8 +301,8 @@ function memStreak(mem){
 function memTimeToday(mem){
   var out={},total=0;
   if(!mem)return {by:out,total:total};
-  /* 新版有 timeToday（今日各科），旧版只有 subjectTime（累计） */
-  var src=mem.timeToday||mem.subjectTime||{};
+  /* 主用：GitHub Pages 版 subjectTime（累计各科投入）；trae 版 timeToday（今日）作回退 */
+  var src=mem.subjectTime||mem.timeToday||{};
   SUBJ_ORDER.forEach(function(s){var v=Number(src[s])||0;out[s]=v;total+=v;});
   return {by:out,total:total};
 }
@@ -381,7 +384,7 @@ function cardHtml(j){
     +'<div class="progress"><i class="'+barCls+'" style="width:'+(j.pct*100)+'%"></i></div>'
     +'<div class="extra">'+verdictHtml(j)+'　期望进度 '+(j.exp*100).toFixed(0)+'%</div></div>'
     +'<div class="metric"><div class="k">记忆卡今日</div><div class="v">'+j.memToday+'<small> / '+j.memGoal+' 题</small></div>'
-    +'<div class="extra">连击 '+j.streak+' 天 · 今日投入 '+fmtMins(j.memTotalMin/60000)+'</div></div>'
+    +'<div class="extra">连击 '+j.streak+' 天 · 累计投入 '+fmtMins(j.memTotalMin/60000)+'</div></div>'
     +'</div>'
     +'<div class="row2">'
     +'<div class="metric"><div class="k">专注保护</div><div class="v" style="font-size:16px">'+(j.focus.on?"已开启":"未开启")+'</div>'
@@ -390,7 +393,7 @@ function cardHtml(j){
     +'<div class="extra">记忆卡掌握：已记 '+j.dist.pass+' · 模糊 '+j.dist.half+' · 待重练 '+j.dist.fail+'</div></div>'
     +'</div>'
     +'<div class="sec"><div class="t">工作台 · 今日各科打卡</div>'+subjHtml+'</div>'
-    +'<div class="sec"><div class="t">记忆卡 · 今日各科投入</div>'+memSubjHtml+'</div>'
+    +'<div class="sec"><div class="t">记忆卡 · 各科累计投入</div>'+memSubjHtml+'</div>'
     +distMsg+lagMsg
     +'</div></div>';
 }
