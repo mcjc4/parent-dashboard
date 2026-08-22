@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家长看板 · 学习雷达</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --line:#e6e8ee; --ink:#1f2329; --sub:#6b7280;
+  --blue:#185FA5; --blue-bg:#E6F1FB; --green:#3B6D11; --green-bg:#EAF3DE;
+  --red:#A32D2D; --red-bg:#FCEBEB; --amber:#854F0B; --amber-bg:#FAEEDA;
+  --purple:#534AB7; --purple-bg:#EEEDFE;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px}
+h1 .dot{width:10px;height:10px;border-radius:50%;background:var(--blue);display:inline-block}
+.sub{color:var(--sub);font-size:13px}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{opacity:.88;color:#fff}
+.btn.sm{padding:4px 10px;font-size:12px}
+.stamp{font-size:12px;color:var(--sub)}
+.stamp b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pcard.lag{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.phead{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:600}
+.pname{font-size:16px;font-weight:600}
+.pmeta{font-size:12px;color:var(--sub)}
+.chips{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.chip{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:500}
+.chip.on{background:var(--green-bg);color:var(--green)}
+.chip.off{background:var(--red-bg);color:var(--red)}
+.chip.warn{background:var(--amber-bg);color:var(--amber)}
+.chip.blue{background:var(--blue-bg);color:var(--blue)}
+.pbody{padding:14px 16px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+.metric{background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.metric .k{font-size:12px;color:var(--sub);margin-bottom:2px}
+.metric .v{font-size:20px;font-weight:700}
+.metric .v small{font-size:13px;font-weight:400;color:var(--sub)}
+.metric .extra{font-size:12px;color:var(--sub);margin-top:2px}
+.progress{height:10px;background:#eef0f4;border-radius:99px;overflow:hidden;margin:6px 0 4px}
+.progress i{display:block;height:100%;border-radius:99px;background:var(--blue);transition:width .4s}
+.progress i.good{background:var(--green)}
+.progress i.warn{background:var(--amber)}
+.progress i.bad{background:var(--red)}
+.verdict{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 10px;border-radius:999px}
+.verdict.good{background:var(--green-bg);color:var(--green)}
+.verdict.warn{background:var(--amber-bg);color:var(--amber)}
+.verdict.bad{background:var(--red-bg);color:var(--red)}
+.sec{margin-top:14px}
+.sec .t{font-size:13px;font-weight:600;color:var(--sub);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sec .t i{width:4px;height:12px;border-radius:2px;background:var(--blue);display:inline-block}
+.subjbar{display:flex;flex-direction:column;gap:7px}
+.sbar{display:flex;align-items:center;gap:8px}
+.sbar .sn{width:52px;font-size:12px;color:var(--sub);flex-shrink:0;text-align:right}
+.sbar .track{flex:1;height:8px;background:#eef0f4;border-radius:99px;overflow:hidden}
+.sbar .track i{display:block;height:100%;border-radius:99px;background:var(--blue)}
+.sbar .sv{width:72px;font-size:12px;color:var(--ink);font-weight:500;flex-shrink:0}
+.sbar .sv small{color:var(--sub);font-weight:400}
+.memgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mem{text-align:center;background:#fafbfc;border:1px solid var(--line);border-radius:10px;padding:8px 4px}
+.mem .mv{font-size:17px;font-weight:700}
+.mem .mk{font-size:11px;color:var(--sub);margin-top:1px}
+.mem.good .mv{color:var(--green)} .mem.warn .mv{color:var(--amber)} .mem.bad .mv{color:var(--red)}
+.lagbar{background:var(--red-bg);color:var(--red);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:500;margin-top:12px;display:none}
+.pcard.lag .lagbar{display:block}
+.distAlert{background:var(--red-bg);color:var(--red);border-radius:10px;padding:8px 12px;font-size:12px;margin-top:8px}
+.distAlert b{font-weight:600}
+.bottom{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bottom h3{font-size:15px;font-weight:600;margin-bottom:12px}
+.trend{display:flex;align-items:flex-end;gap:8px;height:150px;padding:6px 2px 0}
+.tcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.tcol .bar{width:70%;border-radius:5px 5px 0 0;background:var(--blue);min-height:2px}
+.tcol .bar.xy{background:var(--green)}
+.tcol .bar.cz{background:var(--amber)}
+.tcol .lbl{font-size:11px;color:var(--sub)}
+.tcol .val{font-size:11px;font-weight:600}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--sub);margin-top:10px;flex-wrap:wrap}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+.errbox{background:var(--red-bg);color:var(--red);border-radius:12px;padding:16px;text-align:center;font-size:14px;margin-top:12px;display:none}
+.loading{text-align:center;color:var(--sub);padding:60px 0;font-size:14px}
+.modal-mask{position:fixed;inset:0;background:rgba(20,24,30,.45);display:none;align-items:center;justify-content:center;z-index:99;padding:16px}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:440px;max-height:88vh;overflow:auto;padding:18px 20px}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:14px}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+.fld input[type=text],.fld input[type=number]{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px}
+.fld input[type=number]{width:100%}
+.fld .inline{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.fld .inline input{width:16px;height:16px}
+.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mactions{display:flex;gap:10px;margin-top:16px}
+.mactions .btn{flex:1}
+.hint{font-size:12px;color:var(--sub);margin-top:4px}
+footer{text-align:center;color:var(--sub);font-size:12px;margin-top:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="dot"></span>家长看板 · 学习雷达</h1>
+    <span class="sub">实时掌握孩子学习动态</span>
+    <div class="spacer"></div>
+    <span class="stamp">数据更新 <b id="updStamp">--:--:--</b></span>
+    <button class="btn sm" id="refreshBtn">↻ 刷新</button>
+    <button class="btn sm primary" id="setBtn">⚙ 设置</button>
+  </header>
+
+  <div class="loading" id="loading">正在连接云端数据…</div>
+  <div class="errbox" id="errbox"></div>
+
+  <div class="grid" id="grid" style="display:none"></div>
+
+  <div class="bottom" id="trendBox" style="display:none">
+    <h3>📈 近 7 天学习分钟趋势</h3>
+    <div class="trend" id="trend"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <footer>数据来源：高考学习目标管理台 + 记忆卡（Supabase 云同步）· 只读看板 · 30 秒自动刷新</footer>
+</div>
+
+<div class="modal-mask" id="mask">
+  <div class="modal">
+    <h3>⚙ 看板设置</h3>
+    <div class="fld">
+      <label>学习时段（时间过半·进度过半判定基准）</label>
+      <div class="mrow2">
+        <div><label>开始</label><input type="number" id="sStart" min="0" max="23"></div>
+        <div><label>结束</label><input type="number" id="sEnd" min="1" max="24"></div>
+      </div>
+    </div>
+    <div class="fld">
+      <label>滞后提醒：进度落后预期超过（分钟）时推送</label>
+      <input type="number" id="sLag" min="5" max="240" step="5">
+    </div>
+    <div class="fld">
+      <label class="inline"><input type="checkbox" id="sPushEnabled"> 启用推送提醒</label>
+      <div class="hint">滞后标红为必现；推送为可选，当日每个孩子最多提醒一次</div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--sub);margin:14px 0 8px">📱 微信（PushPlus）</div>
+    <div class="fld">
+      <label class="inline"><input type="checkbox" id="sWechatOn"> 启用微信推送</label>
+    </div>
+    <div class="fld"><label>PushPlus Token</label><input type="text" id="sToken" placeholder="pushplus token"></div>
+    <div class="fld"><label>群组编码（topic，可选）</label><input type="text" id="sTopic" placeholder="chen-study"></div>
+    <div style="font-size:13px;font-weight:600;color:var(--sub);margin:14px 0 8px">💬 钉钉群机器人</div>
+    <div class="fld">
+      <label class="inline"><input type="checkbox" id="sDingOn"> 启用钉钉推送</label>
+    </div>
+    <div class="fld"><label>钉钉 Webhook</label><input type="text" id="sWebhook" placeholder="https://oapi.dingtalk.com/robot/send?access_token=..."></div>
+    <div class="fld"><label>Cloudflare 代理地址（可选）</label><input type="text" id="sProxy" placeholder="https://xxx.workers.dev/"></div>
+    <div class="fld">
+      <label class="inline"><input type="checkbox" id="sTest"> 保存后发送一条测试消息</label>
+    </div>
+    <div class="mactions">
+      <button class="btn" id="cancelBtn">取消</button>
+      <button class="btn primary" id="saveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============ 常量与配置 ============ */
+var CLOUD_URL="https://vajgltnfpdjpnsoknoma.supabase.co";
+var CLOUD_KEY="sb_publishable_WkudOiZ5UwD0VhwquRsUBA_LkBhSyoN";
+var TABLE="gaokao_state";
+var DOCS=["main","chenzihan","jikaka-chenxinyan","jikaka-chenzihan"];
+var PERSONS=[
+  {key:"chenxinyan",name:"陈昕言",work:"main",mem:"jikaka-chenxinyan",color:"#185FA5",emoji:"👧",defaultTarget:600},
+  {key:"chenzihan",name:"陈梓涵",work:"chenzihan",mem:"jikaka-chenzihan",color:"#534AB7",emoji:"👦",defaultTarget:300}
+];
+var SUBJ_ORDER=["语文","数学","英语","物理","化学","政治"];
+var SUBJ_COLORS={语文:"#185FA5",数学:"#534AB7",英语:"#0F6E56",物理:"#BA7517",化学:"#993C1D",政治:"#993556"};
+var CFG_KEY="pd_cfg_v1";
+var PUSH_KEY="pd_push_log_v1";
+var cfg=loadCfg();
+var rows={};   /* id -> {data, updated_at} */
+var lastPush={};
+var timer=null;
+
+function defaultCfg(){return {studyStart:8,studyEnd:22,lagMin:30,pushEnabled:true,wechatOn:true,token:"445f103035b642bf9063688feea05c2b",topic:"chen-study",dingOn:false,webhook:"",proxy:"https://young-hat-353c.mcjc4.workers.dev/"};}
+function loadCfg(){try{var c=JSON.parse(localStorage.getItem(CFG_KEY)||"null");if(c&&typeof c==="object")return Object.assign({},defaultCfg(),c);}catch(e){}return defaultCfg();}
+function saveCfg(){try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}catch(e){}}
+
+/* ============ 工具 ============ */
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function pad(n){return n<10?"0"+n:""+n;}
+function todayStr(){var n=new Date();return n.getFullYear()+"-"+pad(n.getMonth()+1)+"-"+pad(n.getDate());}
+function hm(ts){var d=new Date(ts);return pad(d.getHours())+":"+pad(d.getMinutes());}
+function fmtMins(m){m=Math.round(m);if(m>=60)return (m/60).toFixed(1).replace(/\.0$/,"")+"小时";return m+"分钟";}
+function fetchTimeout(url,opts,ms){
+  return Promise.race([
+    fetch(url,opts),
+    new Promise(function(_,rej){setTimeout(function(){rej(new Error("timeout"));},ms||8000);})
+  ]);
+}
+function getJson(id){
+  var u=CLOUD_URL+"/rest/v1/"+TABLE+"?id=eq."+id+"&select=id,data,updated_at";
+  return fetchTimeout(u,{method:"GET",headers:{apikey:CLOUD_KEY}},10000).then(function(r){
+    if(!r.ok)throw new Error("http "+r.status);
+    return r.json();
+  });
+}
+/* 时间过半·进度过半：当前时刻在学习时段的期望完成比例 */
+function expectPct(){
+  var n=new Date();
+  var h=n.getHours()+n.getMinutes()/60;
+  var s=cfg.studyStart,e=cfg.studyEnd;
+  if(e<=s)e+=24;
+  if(h<s||h>=e)return h<s?0:1;
+  return (h-s)/(e-s);
+}
+function workRecs(work){return work&&work.goals?work.goals.reduce(function(a,g){return a.concat(g.records||[]);},[]):[];}
+function minOfDay(recs){
+  var t=todayStr(),by={},total=0;
+  recs.forEach(function(r){if(r.date===t){var m=Number(r.minutes)||0;by[r.sub||"未分类"]=(by[r.sub||"未分类"]||0)+m;total+=m;}});
+  return {total:total,by:by};
+}
+function wrongToday(recs){
+  var t=todayStr(),w=0;
+  recs.forEach(function(r){if(r.date===t)w+=Number(r.wrongCount)||0;});
+  return w;
+}
+/* ---- 记忆卡：兼容两代数据结构 ----
+ * 新版(trae)：focusEnabled / distractionLog[] / timeToday{}
+ * 旧版(通用版)：guardCfg{enabled} / guard{date,count,minutes}
+ */
+function memLatestTs(mem){
+  var mx=0;
+  if(mem&&mem.lastRes)Object.keys(mem.lastRes).forEach(function(s){Object.keys(mem.lastRes[s]||{}).forEach(function(id){var v=mem.lastRes[s][id];if(v&&v.ts>mx)mx=v.ts;});});
+  if(mem&&Array.isArray(mem.browseHistory)&&mem.browseHistory.length)mx=Math.max(mx,mem.browseHistory[0].ts||0);
+  return mx;
+}
+function memFocus(mem){
+  var out={on:false,count:0,minutes:0,level:"",recent:false};
+  if(!mem)return out;
+  /* 新版：focusEnabled + distractionLog */
+  if(mem.focusEnabled!==undefined||mem.distractionLog){
+    out.on=!!mem.focusEnabled;
+    var log=mem.distractionLog||{};
+    var arr=[];
+    if(Array.isArray(log))arr=log;
+    else Object.keys(log).forEach(function(k){if(log[k]&&log[k].ts)arr.push(log[k]);});
+    arr.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+    var now=Date.now(),today=todayStr();
+    arr.forEach(function(e){
+      if(!e||!e.ts)return;
+      var d=new Date(e.ts);
+      var ds=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+      if(ds===today){out.count++;out.minutes+=Math.max(1,Math.round((e.dur||0)/60));}
+    });
+    if(arr.length&&now-arr[0].ts<10*60*1000){out.recent=true;out.level=arr[0].level||"";}
+    return out;
+  }
+  /* 旧版：guardCfg + guard */
+  var gc=mem.guardCfg||{};out.on=!!gc.enabled;
+  if(mem.guard&&mem.guard.date===todayStr()){out.count=Number(mem.guard.count)||0;out.minutes=Number(mem.guard.minutes)||0;}
+  return out;
+}
+function memTodayCount(mem,subj){
+  if(!mem||!mem.today||!mem.today[subj])return 0;
+  var td=mem.today[subj];
+  return td.date===todayStr()?(Number(td.count)||0):0;
+}
+function memStateDist(mem){
+  var dist={pass:0,fail:0,half:0};
+  if(!mem||!mem.state)return dist;
+  SUBJ_ORDER.forEach(function(s){
+    var st=mem.state[s]||{};
+    Object.keys(st).forEach(function(id){var v=st[id];if(v===1)dist.pass++;else if(v===2)dist.fail++;else if(v===3)dist.half++;});
+  });
+  return dist;
+}
+function memStreak(mem){
+  if(!mem||!Array.isArray(mem.streak)||!mem.streak.length)return 0;
+  var set={};mem.streak.forEach(function(d){set[d]=1;});
+  var n=0,d=new Date();
+  while(true){
+    var k=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+    if(set[k]){n++;d.setDate(d.getDate()-1);}else break;
+  }
+  return n;
+}
+function memTimeToday(mem){
+  var out={},total=0;
+  if(!mem)return {by:out,total:total};
+  /* 新版有 timeToday（今日各科），旧版只有 subjectTime（累计） */
+  var src=mem.timeToday||mem.subjectTime||{};
+  SUBJ_ORDER.forEach(function(s){var v=Number(src[s])||0;out[s]=v;total+=v;});
+  return {by:out,total:total};
+}
+/* 判定某娃状态 */
+function judge(p){
+  var work=rows[p.work]&&rows[p.work].data||null;
+  var mem=rows[p.mem]&&rows[p.mem].data||null;
+  var recs=workRecs(work);
+  var wmin=minOfDay(recs);
+  var target=work&&work.dailyTargetMins!=null?Number(work.dailyTargetMins)||p.defaultTarget:p.defaultTarget;
+  var pct=target>0?Math.min(1,wmin.total/target):0;
+  var exp=expectPct();
+  var gap=pct-exp;
+  var state=gap>=0.1?"good":(gap>=-0.05?"warn":"bad");
+  var lagMin=0;if(gap<0)lagMin=Math.round(-gap*target);
+  var focus=memFocus(mem);
+  var active=false;
+  var ts=memLatestTs(mem);
+  if(ts&&(Date.now()-ts)<5*60*1000)active=true;
+  var dist=memStateDist(mem);
+  var memToday=0;SUBJ_ORDER.forEach(function(s){memToday+=memTodayCount(mem,s);});
+  var memGoal=0;SUBJ_ORDER.forEach(function(s){if(mem&&mem.goal)memGoal+=Number(mem.goal[s])||300;});
+  if(!memGoal)memGoal=SUBJ_ORDER.length*300;
+  var subjMins={};SUBJ_ORDER.forEach(function(s){
+    var m=0;
+    (work&&work.goals||[]).forEach(function(g){if(g.name===s)(g.records||[]).forEach(function(r){if(r.date===todayStr())m+=Number(r.minutes)||0;});});
+    if(m>0)subjMins[s]=m;
+  });
+  var mtt=memTimeToday(mem);
+  return {
+    name:p.name,color:p.color,emoji:p.emoji,
+    target:target,worked:wmin.total,pct:pct,exp:exp,gap:gap,state:state,lagMin:lagMin,
+    focus:focus,active:active,
+    subjMins:subjMins,wrong:wrongToday(recs),
+    memToday:memToday,memGoal:memGoal,dist:dist,streak:memStreak(mem),
+    memTotalMin:mtt.total,memSubjMin:mtt.by,
+    lastUp:rows[p.work]?rows[p.work].updated_at:0
+  };
+}
+/* ============ 渲染 ============ */
+function verdictHtml(j){
+  var map={good:["🟢 超前于进度","good"],warn:["🟡 基本同步","warn"],bad:["🔴 滞后于进度","bad"]};
+  var m=map[j.state];
+  return '<span class="verdict '+m[1]+'">'+m[0]+'</span>';
+}
+function cardHtml(j){
+  var guardChip=j.focus.on?'<span class="chip on">🛡 专注保护已开启</span>':'<span class="chip off">🛡 专注保护未开启</span>';
+  var actChip=j.active?'<span class="chip blue">📖 正在学习中</span>':'<span class="chip warn">💤 暂无训练</span>';
+  var barCls=j.state==="good"?"good":(j.state==="warn"?"warn":"bad");
+  var lagMsg="";
+  if(j.state==="bad")lagMsg='<div class="lagbar">⚠ 进度落后预期约 '+j.lagMin+' 分钟（已学习 '+fmtMins(j.worked)+' / 目标 '+j.target+' 分钟）</div>';
+  var distMsg="";
+  if(j.focus.recent&&j.focus.count>0){
+    var lv=j.focus.level==="penalize"?"（严重）":"";
+    distMsg='<div class="distAlert"><b>⚠ 刚刚检测到分心</b> 今日离开 '+j.focus.count+' 次 · 累计 '+fmtMins(j.focus.minutes)+lv+'</div>';
+  }
+  var subjHtml="";
+  var hasSubj=false;
+  Object.keys(j.subjMins).forEach(function(s){
+    if(j.subjMins[s]>0){hasSubj=true;
+      subjHtml+='<div class="sbar"><span class="sn">'+esc(s)+'</span><div class="track"><i style="width:'+Math.min(100,j.subjMins[s]/Math.max(j.target/SUBJ_ORDER.length,1)*100)+'%;background:'+SUBJ_COLORS[s]+'"></i></div><span class="sv">'+fmtMins(j.subjMins[s])+'</span></div>';
+    }
+  });
+  if(!hasSubj)subjHtml='<div style="color:var(--sub);font-size:13px">今日暂未打卡</div>';
+  var memSubjHtml="";
+  SUBJ_ORDER.forEach(function(s){
+    var v=j.memSubjMin[s]||0;
+    memSubjHtml+='<div class="sbar"><span class="sn">'+esc(s)+'</span><div class="track"><i style="width:'+Math.min(100,v/3600000*100)+'%;background:'+SUBJ_COLORS[s]+'"></i></div><span class="sv">'+fmtMins(v/60000)+'</span></div>';
+  });
+  return '<div class="pcard '+(j.state==="bad"?"lag":"")+'">'
+    +'<div class="phead">'
+    +'<div class="avatar" style="background:'+j.color+'">'+j.emoji+'</div>'
+    +'<div><div class="pname">'+esc(j.name)+'</div><div class="pmeta">'+todayStr()+' · 目标 '+j.target+' 分钟</div></div>'
+    +'<div class="chips">'+actChip+guardChip+'</div>'
+    +'</div>'
+    +'<div class="pbody">'
+    +'<div class="row2">'
+    +'<div class="metric"><div class="k">今日已学习</div><div class="v">'+fmtMins(j.worked)+'<small> / '+j.target+' 分钟</small></div>'
+    +'<div class="progress"><i class="'+barCls+'" style="width:'+(j.pct*100)+'%"></i></div>'
+    +'<div class="extra">'+verdictHtml(j)+'　期望进度 '+(j.exp*100).toFixed(0)+'%</div></div>'
+    +'<div class="metric"><div class="k">记忆卡今日</div><div class="v">'+j.memToday+'<small> / '+j.memGoal+' 题</small></div>'
+    +'<div class="extra">连击 '+j.streak+' 天 · 今日投入 '+fmtMins(j.memTotalMin/60000)+'</div></div>'
+    +'</div>'
+    +'<div class="row2">'
+    +'<div class="metric"><div class="k">专注保护</div><div class="v" style="font-size:16px">'+(j.focus.on?"已开启":"未开启")+'</div>'
+    +'<div class="extra">今日离开 '+j.focus.count+' 次 · 累计 '+fmtMins(j.focus.minutes)+'</div></div>'
+    +'<div class="metric"><div class="k">错题合计</div><div class="v">'+j.wrong+'<small> 道</small></div>'
+    +'<div class="extra">记忆卡掌握：已记 '+j.dist.pass+' · 模糊 '+j.dist.half+' · 待重练 '+j.dist.fail+'</div></div>'
+    +'</div>'
+    +'<div class="sec"><div class="t">工作台 · 今日各科打卡</div>'+subjHtml+'</div>'
+    +'<div class="sec"><div class="t">记忆卡 · 今日各科投入</div>'+memSubjHtml+'</div>'
+    +distMsg+lagMsg
+    +'</div></div>';
+}
+function trendHtml(){
+  var days=[],d=new Date();
+  for(var i=6;i>=0;i--){var x=new Date(d);x.setDate(x.getDate()-i);days.push(x.getFullYear()+"-"+pad(x.getMonth()+1)+"-"+pad(x.getDate()));}
+  var series={chenxinyan:[],chenzihan:[]};
+  PERSONS.forEach(function(p){
+    var work=rows[p.work]&&rows[p.work].data||null;
+    var recs=workRecs(work);
+    days.forEach(function(ds){
+      var m=0;recs.forEach(function(r){if(r.date===ds)m+=Number(r.minutes)||0;});
+      series[p.key].push(m);
+    });
+  });
+  var max=1;
+  PERSONS.forEach(function(p){series[p.key].forEach(function(v){max=Math.max(max,v);});});
+  max=Math.ceil(max/30)*30+30;
+  var html="";
+  days.forEach(function(ds,i){
+    var v1=series.chenxinyan[i],v2=series.chenzihan[i];
+    var h1=Math.max(2,v1/max*110),h2=Math.max(2,v2/max*110);
+    var lbl=(ds.slice(5)+"").replace("-","/");
+    html+='<div class="tcol"><div class="bar xy" style="height:'+h1+'px"></div><div class="bar cz" style="height:'+h2+'px"></div><div class="val">'+Math.round(v1+v2)+'</div><div class="lbl">'+lbl+'</div></div>';
+  });
+  return html;
+}
+function render(){
+  var grid=$("grid");
+  grid.innerHTML=PERSONS.map(function(p){return cardHtml(judge(p));}).join("");
+  $("trend").innerHTML=trendHtml();
+  $("trendBox").style.display="block";
+  $("updStamp").textContent=hm(Date.now());
+  checkPush();
+}
+/* ============ 推送（滞后提醒，当日一次） ============ */
+function checkPush(){
+  if(!cfg.pushEnabled)return;
+  var t=todayStr();
+  try{lastPush=JSON.parse(localStorage.getItem(PUSH_KEY)||"{}")||{};}catch(e){lastPush={};}
+  PERSONS.forEach(function(p){
+    var j=judge(p);
+    if(j.state!=="bad")return;
+    if(j.lagMin<cfg.lagMin)return;
+    var key=p.key+"|"+t;
+    if(lastPush[key])return;
+    var lines=[
+      "⚠️ "+p.name+" 学习进度滞后",
+      "当前已学习 "+fmtMins(j.worked)+" / 目标 "+j.target+" 分钟",
+      "落后预期约 "+j.lagMin+" 分钟（时间过半·进度过半判定）",
+      j.focus.on?"专注保护已开启 · 今日离开 "+j.focus.count+" 次":"⚠ 专注保护未开启！",
+      "记忆卡今日 "+j.memToday+"/"+j.memGoal+" 题 · 连续打卡 "+j.streak+" 天"
+    ];
+    sendPush("📊 家长看板 · 进度提醒",lines.join("\n")).then(function(ok){
+      if(ok){lastPush[key]=Date.now();try{localStorage.setItem(PUSH_KEY,JSON.stringify(lastPush));}catch(e){}}
+    });
+  });
+}
+async function sendPush(title,content){
+  var ok1=false,ok2=false;
+  if(cfg.wechatOn&&cfg.token){
+    try{
+      var pl={token:cfg.token,title:title,content:content,template:"txt"};
+      if(cfg.topic)pl.topic=cfg.topic;
+      var r=await fetchTimeout("https://www.pushplus.plus/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(pl)},8000);
+      if(r.ok){var j=await r.json().catch(function(){return null;});ok1=!(j&&j.code!==undefined&&j.code!==200);}
+    }catch(e){console.warn("pushplus fail",e);}
+  }
+  if(cfg.dingOn&&cfg.webhook){
+    try{
+      var pl2={msgtype:"text",text:{content:content}};
+      var u=cfg.proxy&&cfg.proxy.trim()?cfg.proxy.trim():cfg.webhook;
+      var b=cfg.proxy&&cfg.proxy.trim()?JSON.stringify({url:cfg.webhook,payload:pl2}):JSON.stringify(pl2);
+      var r2=await fetchTimeout(u,{method:"POST",headers:{"Content-Type":"application/json"},body:b},8000);
+      if(r2.ok){var j2=await r2.json().catch(function(){return null;});ok2=!(j2&&j2.errcode!==undefined&&j2.errcode!==0);}
+    }catch(e){console.warn("ding fail",e);}
+  }
+  return ok1||ok2;
+}
+/* ============ 数据加载 ============ */
+async function loadAll(){
+  try{
+    var results=await Promise.all(DOCS.map(getJson));
+    DOCS.forEach(function(id,i){
+      var arr=results[i];
+      if(Array.isArray(arr)&&arr.length){
+        var row=arr[0];
+        rows[id]={data:(typeof row.data==="string"?JSON.parse(row.data):row.data),updated_at:row.updated_at};
+      }
+    });
+    $("loading").style.display="none";
+    $("errbox").style.display="none";
+    $("grid").style.display="";
+    render();
+  }catch(e){
+    $("loading").style.display="none";
+    $("grid").style.display="none";
+    $("trendBox").style.display="none";
+    var eb=$("errbox");eb.style.display="block";
+    eb.textContent="⚠ 云端数据拉取失败："+e.message+"。请检查网络后点击「刷新」重试。";
+  }
+}
+/* ============ 事件 ============ */
+$("refreshBtn").addEventListener("click",loadAll);
+$("setBtn").addEventListener("click",openSettings);
+$("cancelBtn").addEventListener("click",function(){$("mask").classList.remove("show");});
+$("mask").addEventListener("click",function(e){if(e.target===$("mask"))$("mask").classList.remove("show");});
+$("saveBtn").addEventListener("click",function(){
+  cfg.studyStart=Math.max(0,Math.min(23,Number($("sStart").value)||8));
+  cfg.studyEnd=Math.max(1,Math.min(24,Number($("sEnd").value)||22));
+  cfg.lagMin=Math.max(5,Math.min(240,Number($("sLag").value)||30));
+  cfg.pushEnabled=$("sPushEnabled").checked;
+  cfg.wechatOn=$("sWechatOn").checked;
+  cfg.token=$("sToken").value.trim();
+  cfg.topic=$("sTopic").value.trim();
+  cfg.dingOn=$("sDingOn").checked;
+  cfg.webhook=$("sWebhook").value.trim();
+  cfg.proxy=$("sProxy").value.trim();
+  saveCfg();
+  var test=$("sTest").checked;
+  $("mask").classList.remove("show");
+  render();
+  if(test)sendPush("📊 家长看板 · 测试消息","看板推送配置已保存，收到请忽略。");
+});
+function openSettings(){
+  $("sStart").value=cfg.studyStart;
+  $("sEnd").value=cfg.studyEnd;
+  $("sLag").value=cfg.lagMin;
+  $("sPushEnabled").checked=!!cfg.pushEnabled;
+  $("sWechatOn").checked=!!cfg.wechatOn;
+  $("sToken").value=cfg.token||"";
+  $("sTopic").value=cfg.topic||"";
+  $("sDingOn").checked=!!cfg.dingOn;
+  $("sWebhook").value=cfg.webhook||"";
+  $("sProxy").value=cfg.proxy||"";
+  $("sTest").checked=false;
+  $("mask").classList.add("show");
+}
+loadAll();
+setInterval(loadAll,30000);
+</script>
+</body>
+</html>
